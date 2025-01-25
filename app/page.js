@@ -6,21 +6,27 @@ export default function DiceThrower() {
   const [dice, setDice] = useState([1, 1, 1]);
   const [isShaking, setIsShaking] = useState([false, false, false]);
   const [total, setTotal] = useState(3);
+  const [diceRange, setDiceRange] = useState(6); // Default dice range is 1-6
 
-  // Handle dice throw
   const throwDice = () => {
     const shakingState = [true, true, true];
     setIsShaking(shakingState);
 
     // Simulate rocking animation for 500ms
     setTimeout(() => {
-      const newDice = [1, 2, 3].map(() => Math.floor(Math.random() * 6) + 1);
+      const newDice = [1, 2, 3].map(
+        () => Math.floor(Math.random() * diceRange) + 1
+      );
       setDice(newDice);
       setTotal(newDice.reduce((acc, value) => acc + value, 0));
 
       // Stop shaking after animation
       setIsShaking([false, false, false]);
     }, 500);
+  };
+
+  const handleRangeChange = (e) => {
+    setDiceRange(Number(e.target.value)); // Update the dice range based on user selection
   };
 
   return (
@@ -40,7 +46,25 @@ export default function DiceThrower() {
         ))}
       </div>
 
-      <p className="text-lg font-bold mb-8">Total: {total}</p>
+      <p className="text-lg font-bold mb-4">Total: {total}</p>
+
+      <div className="mb-6">
+        <label htmlFor="diceRange" className="mr-4 text-lg font-bold">
+          Select Dice Range:
+        </label>
+        <select
+          id="diceRange"
+          value={diceRange}
+          onChange={handleRangeChange}
+          className="px-4 py-2 bg-white text-black rounded-lg shadow-md"
+        >
+          <option value={6}>1–6</option>
+          <option value={7}>1–7</option>
+          <option value={8}>1–8</option>
+          <option value={9}>1–9</option>
+          <option value={10}>1–10</option>
+        </select>
+      </div>
 
       <button
         onClick={throwDice}
