@@ -229,7 +229,7 @@ export default function DiceThrower() {
         )}
         {!calibrationMode && isCalibrated && (
           <p className="text-lg font-medium">
-            Check completed. Number of Throws: {calibrationThrows}
+            Check done. Number of Throws: {calibrationThrows}
           </p>
         )}
         <div className="flex gap-3">
