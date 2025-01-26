@@ -215,7 +215,7 @@ export default function DiceThrower() {
       </div>
 
       <footer className="mt-10 text-sm text-gray-200">
-        © 2025 LWJ Media Library. All rights reserved.
+        © {new Date().getFullYear()} LWJ Dice App. All rights reserved.
       </footer>
     </main>
   );
