@@ -1,18 +1,24 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
-  BarElement,
   CategoryScale,
   LinearScale,
+  BarElement,
+  Title,
   Tooltip,
   Legend,
 } from "chart.js";
 
-// Register Chart.js components
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function DiceThrower() {
   // State variables
@@ -22,6 +28,8 @@ export default function DiceThrower() {
   const [diceRange, setDiceRange] = useState(6); // Default range is 1-6
   const [results, setResults] = useState(Array(10).fill(0)); // Tracks frequency of dice results
   const [throwCount, setThrowCount] = useState(0); // Tracks the number of throws
+
+  const chartRef = useRef(null); // Reference to the chart for manual resizing
 
   // Chart data
   const data = {
@@ -40,11 +48,12 @@ export default function DiceThrower() {
   // Chart options
   const options = {
     responsive: true,
+    maintainAspectRatio: false, // Disable strict aspect ratio
     plugins: {
       legend: {
         position: "top",
         labels: {
-          color: "white", // Legend label color
+          color: "white", // Legend label colour
         },
       },
     },
@@ -52,7 +61,7 @@ export default function DiceThrower() {
       x: {
         beginAtZero: true,
         ticks: {
-          color: "white", // X-axis tick label color
+          color: "white", // X-axis tick label colour
         },
         title: {
           display: true,
@@ -64,7 +73,7 @@ export default function DiceThrower() {
         beginAtZero: true,
         ticks: {
           stepSize: 1,
-          color: "white", // Y-axis tick label color
+          color: "white", // Y-axis tick label colour
         },
         title: {
           display: true,
@@ -75,7 +84,7 @@ export default function DiceThrower() {
     },
   };
 
-  // Function to handle dice throws
+  // Handle dice throw
   const throwDice = () => {
     const shakingState = [true, true, true];
     setIsShaking(shakingState);
@@ -99,6 +108,7 @@ export default function DiceThrower() {
     }, 500);
   };
 
+  // Reset data and throw count
   const resetData = (newRange) => {
     setDiceRange(newRange);
     setResults(Array(10).fill(0)); // Reset results
@@ -107,12 +117,23 @@ export default function DiceThrower() {
     setTotal(3); // Reset total
   };
 
-  // Render
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
-      <h1 className="text-4xl font-bold mb-6 mt-6">Dice Thrower</h1>
+  // Resize chart on orientation change
+  useEffect(() => {
+    const handleResize = () => {
+      if (chartRef.current) {
+        chartRef.current.resize(); // Manually trigger resize on the chart
+      }
+    };
 
-      {/* Chart Range Selector */}
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
+      <h1 className="text-4xl font-bold mb-6">Dice Thrower</h1>
+
+      {/* Dice Range Selector */}
       <div className="mb-4">
         <label htmlFor="diceRange" className="mr-2 text-lg font-medium">
           Select Dice Range:
@@ -157,8 +178,8 @@ export default function DiceThrower() {
 
       {/* Responsive and Centered Histogram */}
       <div className="mt-10 flex justify-center w-full px-4">
-        <div className="w-full max-w-4xl">
-          <Bar data={data} options={options} />
+        <div className="w-full max-w-4xl h-96">
+          <Bar ref={chartRef} data={data} options={options} />
         </div>
       </div>
 
