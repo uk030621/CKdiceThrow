@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import clsx from "clsx"; // To handle conditional classes easily
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -35,6 +36,39 @@ export default function DiceThrower() {
   const [calibrationMode, setCalibrationMode] = useState(false);
   const [calibrationThrows, setCalibrationThrows] = useState(0);
   const [isCalibrated, setIsCalibrated] = useState(false);
+  const [isShaking, setIsShaking] = useState([false, false, false]);
+  const [total, setTotal] = useState(3);
+
+  const throwDice = () => {
+    // Set all dice to shaking state
+    setIsShaking([true, true, true]);
+
+    // Simulate shaking animation for 500ms
+    setTimeout(() => {
+      // Generate new dice values
+      const newDice = Array.from(
+        { length: 3 },
+        () => Math.floor(Math.random() * diceRange) + 1
+      );
+
+      // Update the `results` array to reflect the frequency of the dice values rolled
+      setResults((prevResults) => {
+        const updatedResults = [...prevResults];
+        newDice.forEach((value) => {
+          updatedResults[value - 1] += 1; // Increment the frequency for the rolled value
+        });
+        return updatedResults;
+      });
+
+      // Update other state
+      setDice(newDice);
+      setTotal(newDice.reduce((acc, value) => acc + value, 0));
+      setThrows((prevThrows) => prevThrows + 1);
+
+      // Stop shaking animation
+      setIsShaking([false, false, false]);
+    }, 500);
+  };
 
   const rollDice = () => {
     const newDice = Array.from(
@@ -83,7 +117,7 @@ export default function DiceThrower() {
     1.96 * Math.sqrt(expectedFrequency * (1 - 1 / diceRange));
 
   const data = {
-    labels: Array.from({ length: diceRange }, (_, i) => `Value ${i + 1}`),
+    labels: Array.from({ length: diceRange }, (_, i) => `${i + 1}`),
     datasets: [
       {
         label: "Frequency",
@@ -101,22 +135,22 @@ export default function DiceThrower() {
         pointRadius: 0,
       },
       {
-        label: "95% Low",
+        label: "95% Lo CI ",
         data: Array(diceRange).fill(expectedFrequency - confidenceInterval),
         type: "line",
         borderColor: "rgb(236, 8, 8)",
         borderWidth: 1,
         pointRadius: 0,
-        borderDash: [5, 5],
+        //borderDash: [5, 5],
       },
       {
-        label: "95% High",
+        label: "95% Hi CI",
         data: Array(diceRange).fill(expectedFrequency + confidenceInterval),
         type: "line",
         borderColor: "rgb(236, 8, 8)",
         borderWidth: 1,
         pointRadius: 0,
-        borderDash: [5, 5],
+        //borderDash: [5, 5],
       },
     ],
   };
@@ -129,6 +163,9 @@ export default function DiceThrower() {
         position: "top",
         labels: {
           color: "white",
+          font: {
+            size: 14,
+          },
         },
       },
     },
@@ -150,7 +187,7 @@ export default function DiceThrower() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
-      <h1 className="text-4xl font-bold mb-5 mt-4">CK Dice Thrower</h1>
+      <h1 className="text-3xl font-bold mb-5 mt-1">CK Dice Thrower</h1>
 
       <div className="flex flex-col items-center">
         <label htmlFor="dice-range" className="text-lg font-medium mb-2">
@@ -169,11 +206,14 @@ export default function DiceThrower() {
           ))}
         </select>
 
-        <div className="flex gap-4 mb-5">
+        <div className="flex gap-4 mb-4">
           {dice.map((value, index) => (
             <div
               key={index}
-              className="flex items-center justify-center w-16 h-16 text-2xl font-bold bg-white text-black rounded shadow"
+              className={clsx(
+                "w-14 h-14 bg-slate-300 rounded-lg flex items-center justify-center text-black text-3xl font-semibold shadow-lg transition-transform",
+                { [`animate-rock-${index + 1}`]: isShaking[index] }
+              )}
             >
               {value}
             </div>
@@ -192,27 +232,33 @@ export default function DiceThrower() {
             Check completed. Number of Throws: {calibrationThrows}
           </p>
         )}
-
-        <button
-          onClick={
-            isCalibrated ? resetCalibration : calibrationMode ? null : rollDice
-          }
-          className="mt-5 px-6 py-2 bg-yellow-500 text-black font-bold rounded shadow hover:bg-yellow-600"
-        >
-          {isCalibrated ? "Reset Check" : "Throw Dice"}
-        </button>
-
-        {!calibrationMode && !isCalibrated && (
+        <div className="flex gap-3">
           <button
-            onClick={runCalibration}
-            className="mt-3 px-6 py-2 bg-green-500 text-black font-bold rounded shadow hover:bg-green-600"
+            onClick={() => {
+              if (isCalibrated) {
+                resetCalibration();
+              } else if (!calibrationMode) {
+                rollDice();
+                throwDice(); // Call throwDice here
+              }
+            }}
+            className="mt-3 px-6 py-2 bg-yellow-300 text-black  rounded shadow hover:bg-yellow-400 text-sm"
           >
-            Check For Bias
+            {isCalibrated ? "Reset Check" : "Throw Dice"}
           </button>
-        )}
+
+          {!calibrationMode && !isCalibrated && (
+            <button
+              onClick={runCalibration}
+              className="mt-3 px-6 py-2 bg-slate-800 text-white  rounded shadow hover:bg-slate-900 text-sm"
+            >
+              Bias check
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="mt-10 w-full max-w-3xl" style={{ height: "300px" }}>
+      <div className="mt-10 w-full max-w-3xl" style={{ height: "250px" }}>
         <Bar data={data} options={options} />
       </div>
 
