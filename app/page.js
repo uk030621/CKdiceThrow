@@ -1,11 +1,14 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+
+import { useState } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement, // Add this
+  PointElement, // Add this
   Title,
   Tooltip,
   Legend,
@@ -15,23 +18,68 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement, // Register here
+  PointElement, // Register here
   Title,
   Tooltip,
   Legend
 );
 
 export default function DiceThrower() {
-  // State variables
+  const [diceRange, setDiceRange] = useState(6);
   const [dice, setDice] = useState([1, 1, 1]);
-  const [isShaking, setIsShaking] = useState([false, false, false]);
-  const [total, setTotal] = useState(3);
-  const [diceRange, setDiceRange] = useState(6); // Default range is 1-6
-  const [results, setResults] = useState(Array(10).fill(0)); // Tracks frequency of dice results
-  const [throwCount, setThrowCount] = useState(0); // Tracks the number of throws
+  const [results, setResults] = useState(Array(10).fill(0));
+  const [throws, setThrows] = useState(0);
+  const [calibrationMode, setCalibrationMode] = useState(false);
+  const [calibrationThrows, setCalibrationThrows] = useState(0);
+  const [isCalibrated, setIsCalibrated] = useState(false);
 
-  const chartRef = useRef(null); // Reference to the chart for manual resizing
+  const rollDice = () => {
+    const newDice = Array.from(
+      { length: 3 },
+      () => Math.floor(Math.random() * diceRange) + 1
+    );
+    setDice(newDice);
+    const newResults = [...results];
+    newDice.forEach((value) => {
+      newResults[value - 1] += 1;
+    });
+    setResults(newResults);
+    if (!calibrationMode) {
+      setThrows(throws + 1);
+    }
+  };
 
-  // Chart data
+  const runCalibration = () => {
+    setCalibrationMode(true);
+    setCalibrationThrows(100);
+    const simulatedResults = Array(10).fill(0);
+    for (let i = 0; i < 100; i++) {
+      const newDice = Array.from(
+        { length: 3 },
+        () => Math.floor(Math.random() * diceRange) + 1
+      );
+      newDice.forEach((value) => {
+        simulatedResults[value - 1] += 1;
+      });
+    }
+    setResults(simulatedResults);
+    setIsCalibrated(true);
+    setCalibrationMode(false);
+  };
+
+  const resetCalibration = () => {
+    setResults(Array(10).fill(0));
+    setCalibrationThrows(0);
+    setIsCalibrated(false);
+    setThrows(0);
+  };
+
+  // Calculating expected frequency and confidence intervals
+  const expectedFrequency = (throws + calibrationThrows) * (3 / diceRange);
+  const confidenceInterval =
+    1.96 * Math.sqrt(expectedFrequency * (1 - 1 / diceRange));
+
   const data = {
     labels: Array.from({ length: diceRange }, (_, i) => `Value ${i + 1}`),
     datasets: [
@@ -42,30 +90,49 @@ export default function DiceThrower() {
         borderColor: "rgba(255, 206, 86, 1)",
         borderWidth: 1,
       },
+      {
+        label: "Expected",
+        data: Array(diceRange).fill(expectedFrequency),
+        type: "line",
+        borderColor: "rgb(17, 17, 17)",
+        borderWidth: 2,
+        pointRadius: 0,
+      },
+      {
+        label: "95% Low",
+        data: Array(diceRange).fill(expectedFrequency - confidenceInterval),
+        type: "line",
+        borderColor: "rgb(236, 8, 8)",
+        borderWidth: 1,
+        pointRadius: 0,
+        borderDash: [5, 5],
+      },
+      {
+        label: "95% High",
+        data: Array(diceRange).fill(expectedFrequency + confidenceInterval),
+        type: "line",
+        borderColor: "rgb(236, 8, 8)",
+        borderWidth: 1,
+        pointRadius: 0,
+        borderDash: [5, 5],
+      },
     ],
   };
 
-  // Chart options
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Disable strict aspect ratio
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
         labels: {
-          color: "white", // Legend label colour
+          color: "white",
         },
       },
     },
     scales: {
       x: {
-        beginAtZero: true,
         ticks: {
-          color: "white", // X-axis tick label colour
-        },
-        title: {
-          display: true,
-          text: "Dice Values",
           color: "white",
         },
       },
@@ -73,76 +140,25 @@ export default function DiceThrower() {
         beginAtZero: true,
         ticks: {
           stepSize: 1,
-          color: "white", // Y-axis tick label colour
-        },
-        title: {
-          display: true,
-          text: "Frequency",
           color: "white",
         },
       },
     },
   };
 
-  // Handle dice throw
-  const throwDice = () => {
-    const shakingState = [true, true, true];
-    setIsShaking(shakingState);
-
-    setTimeout(() => {
-      const newDice = [1, 2, 3].map(
-        () => Math.floor(Math.random() * diceRange) + 1
-      );
-      setDice(newDice);
-      setTotal(newDice.reduce((acc, value) => acc + value, 0));
-
-      const newResults = [...results];
-      newDice.forEach((value) => {
-        newResults[value - 1] += 1;
-      });
-      setResults(newResults);
-
-      setThrowCount(throwCount + 1);
-
-      setIsShaking([false, false, false]);
-    }, 500);
-  };
-
-  // Reset data and throw count
-  const resetData = (newRange) => {
-    setDiceRange(newRange);
-    setResults(Array(10).fill(0)); // Reset results
-    setThrowCount(0); // Reset throw count
-    setDice([1, 1, 1]); // Reset dice to initial state
-    setTotal(3); // Reset total
-  };
-
-  // Resize chart on orientation change
-  useEffect(() => {
-    const handleResize = () => {
-      if (chartRef.current) {
-        chartRef.current.resize(); // Manually trigger resize on the chart
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
-      <h1 className="text-4xl font-bold mb-6 mt-4">Dice Thrower</h1>
+    <main className="flex min-h-screen flex-col items-center justify-start p-5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
+      <h1 className="text-4xl font-bold mb-5 mt-4">CK Dice Thrower</h1>
 
-      {/* Dice Range Selector */}
-      <div className="mb-4">
-        <label htmlFor="diceRange" className="mr-2 text-lg font-medium">
+      <div className="flex flex-col items-center">
+        <label htmlFor="dice-range" className="text-lg font-medium mb-2">
           Select Dice Range:
         </label>
         <select
-          id="diceRange"
+          id="dice-range"
           value={diceRange}
-          onChange={(e) => resetData(parseInt(e.target.value, 10))}
-          className="px-4 py-2 rounded-md bg-white text-black shadow-md"
+          onChange={(e) => setDiceRange(parseInt(e.target.value))}
+          className="mb-5 px-4 py-2 rounded text-black"
         >
           {[6, 7, 8, 9, 10].map((range) => (
             <option key={range} value={range}>
@@ -150,42 +166,57 @@ export default function DiceThrower() {
             </option>
           ))}
         </select>
-      </div>
 
-      {/* Dice and Throw Count */}
-      <div className="flex gap-4 mb-4">
-        {dice.map((value, index) => (
-          <div
-            key={index}
-            className={`w-20 h-20 bg-white rounded-lg flex items-center justify-center text-black text-3xl font-semibold shadow-lg transition-transform ${
-              isShaking[index] ? `animate-rock-${index + 1}` : ""
-            }`}
-          >
-            {value}
-          </div>
-        ))}
-      </div>
-
-      <p className="text-lg font-bold mb-2">Total: {total}</p>
-      <p className="text-lg font-bold mb-8">Number of Throws: {throwCount}</p>
-
-      <button
-        onClick={throwDice}
-        className="px-6 py-3 bg-yellow-400 rounded-lg font-bold text-black hover:bg-yellow-300 transition-all duration-300 shadow-lg"
-      >
-        Throw Dice
-      </button>
-
-      {/* Responsive and Centered Histogram */}
-      <div className="mt-10 flex justify-center w-full px-4">
-        <div className="w-full max-w-4xl h-96">
-          <Bar ref={chartRef} data={data} options={options} />
+        <div className="flex gap-4 mb-5">
+          {dice.map((value, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-center w-16 h-16 text-2xl font-bold bg-white text-black rounded shadow"
+            >
+              {value}
+            </div>
+          ))}
         </div>
+
+        <p className="text-lg font-medium">
+          Total: {dice.reduce((a, b) => a + b, 0)}
+        </p>
+        <p className="text-lg font-medium">Number of Throws: {throws}</p>
+        {calibrationMode && (
+          <p className="text-lg font-medium">Bias check in progress...</p>
+        )}
+        {!calibrationMode && isCalibrated && (
+          <p className="text-lg font-medium">
+            Check completed. Number of Throws: {calibrationThrows}
+          </p>
+        )}
+
+        <button
+          onClick={
+            isCalibrated ? resetCalibration : calibrationMode ? null : rollDice
+          }
+          className="mt-5 px-6 py-2 bg-yellow-500 text-black font-bold rounded shadow hover:bg-yellow-600"
+        >
+          {isCalibrated ? "Reset Check" : "Throw Dice"}
+        </button>
+
+        {!calibrationMode && !isCalibrated && (
+          <button
+            onClick={runCalibration}
+            className="mt-3 px-6 py-2 bg-green-500 text-black font-bold rounded shadow hover:bg-green-600"
+          >
+            Check For Bias
+          </button>
+        )}
+      </div>
+
+      <div className="mt-10 w-full max-w-3xl" style={{ height: "300px" }}>
+        <Bar data={data} options={options} />
       </div>
 
       <footer className="mt-10 text-sm text-gray-200">
-        © {new Date().getFullYear()} LWJ Media Library. All rights reserved.
+        © 2025 LWJ Media Library. All rights reserved.
       </footer>
-    </div>
+    </main>
   );
 }
