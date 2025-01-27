@@ -70,22 +70,6 @@ export default function DiceThrower() {
     }, 500);
   };
 
-  const rollDice = () => {
-    const newDice = Array.from(
-      { length: 3 },
-      () => Math.floor(Math.random() * diceRange) + 1
-    );
-    setDice(newDice);
-    const newResults = [...results];
-    newDice.forEach((value) => {
-      newResults[value - 1] += 1;
-    });
-    setResults(newResults);
-    if (!calibrationMode) {
-      setThrows(throws + 1);
-    }
-  };
-
   const runCalibration = () => {
     setCalibrationMode(true);
     setCalibrationThrows(100);
@@ -141,7 +125,6 @@ export default function DiceThrower() {
         borderColor: "rgb(236, 8, 8)",
         borderWidth: 1,
         pointRadius: 0,
-        //borderDash: [5, 5],
       },
       {
         label: "95% Hi CI",
@@ -150,7 +133,6 @@ export default function DiceThrower() {
         borderColor: "rgb(236, 8, 8)",
         borderWidth: 1,
         pointRadius: 0,
-        //borderDash: [5, 5],
       },
     ],
   };
@@ -196,7 +178,14 @@ export default function DiceThrower() {
         <select
           id="dice-range"
           value={diceRange}
-          onChange={(e) => setDiceRange(parseInt(e.target.value))}
+          onChange={(e) => {
+            const newRange = parseInt(e.target.value);
+            setDiceRange(newRange); // Update dice range
+            setThrows(0); // Reset number of throws
+            setResults(Array(10).fill(0)); // Reset results array
+            setDice([1, 1, 1]); // Reset dice to initial values
+            setTotal(3); // Reset total to the minimum sum
+          }}
           className="mb-5 px-4 py-2 rounded text-black"
         >
           {[6, 7, 8, 9, 10].map((range) => (
@@ -238,8 +227,7 @@ export default function DiceThrower() {
               if (isCalibrated) {
                 resetCalibration();
               } else if (!calibrationMode) {
-                rollDice();
-                throwDice(); // Call throwDice here
+                throwDice(); // Call only `throwDice`
               }
             }}
             className="mt-3 px-6 py-2 bg-yellow-300 text-black  rounded shadow hover:bg-yellow-400 text-sm"
