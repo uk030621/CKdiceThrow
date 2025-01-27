@@ -72,9 +72,9 @@ export default function DiceThrower() {
 
   const runCalibration = () => {
     setCalibrationMode(true);
-    setCalibrationThrows(100);
+    setCalibrationThrows(10000);
     const simulatedResults = Array(10).fill(0);
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10000; i++) {
       const newDice = Array.from(
         { length: 3 },
         () => Math.floor(Math.random() * diceRange) + 1
