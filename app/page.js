@@ -190,7 +190,9 @@ export default function DiceThrower() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
-      <h1 className="text-3xl font-bold mb-5 mt-1">CK Dice Thrower</h1>
+      <h1 className="text-2xl font-bold mb-5 mt-1">
+        Mr Kinnear&apos;s Dice Roller
+      </h1>
 
       <div className="flex flex-col items-center">
         <label htmlFor="dice-range" className="text-lg font-medium mb-2">
