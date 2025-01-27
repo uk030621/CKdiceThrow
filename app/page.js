@@ -39,6 +39,15 @@ export default function DiceThrower() {
   const [isShaking, setIsShaking] = useState([false, false, false]);
   const [total, setTotal] = useState(3);
 
+  // Adjusting the results array dynamically based on dice range
+  const updateDiceRange = (newRange) => {
+    setDiceRange(newRange); // Update dice range
+    setThrows(0); // Reset number of throws
+    setResults(Array(newRange).fill(0)); // Dynamically adjust results array size
+    setDice(Array(3).fill(1)); // Reset dice to the minimum values
+    setTotal(3); // Reset total to the minimum sum
+  };
+
   const throwDice = () => {
     // Set all dice to shaking state
     setIsShaking([true, true, true]);
@@ -70,26 +79,38 @@ export default function DiceThrower() {
     }, 500);
   };
 
+  const diceOptions = [
+    { label: "D4", value: 4 },
+    { label: "D6", value: 6 },
+    { label: "D8", value: 8 },
+    { label: "D10", value: 10 },
+    { label: "D12", value: 12 },
+    { label: "D20", value: 20 },
+    { label: "D100", value: 100 },
+  ];
+
   const runCalibration = () => {
     setCalibrationMode(true);
-    setCalibrationThrows(10000);
-    const simulatedResults = Array(10).fill(0);
+    setCalibrationThrows(10000); // Simulate 10,000 throws
+
+    const simulatedResults = Array(diceRange).fill(0); // Adjust dynamically for diceRange
     for (let i = 0; i < 10000; i++) {
       const newDice = Array.from(
         { length: 3 },
         () => Math.floor(Math.random() * diceRange) + 1
       );
       newDice.forEach((value) => {
-        simulatedResults[value - 1] += 1;
+        simulatedResults[value - 1] += 1; // Increment frequency for the rolled value
       });
     }
-    setResults(simulatedResults);
+
+    setResults(simulatedResults); // Update results with simulated frequencies
     setIsCalibrated(true);
     setCalibrationMode(false);
   };
 
   const resetCalibration = () => {
-    setResults(Array(10).fill(0));
+    setResults(Array(diceRange).fill(0)); // Reset dynamically for diceRange
     setCalibrationThrows(0);
     setIsCalibrated(false);
     setThrows(0);
@@ -101,11 +122,11 @@ export default function DiceThrower() {
     1.96 * Math.sqrt(expectedFrequency * (1 - 1 / diceRange));
 
   const data = {
-    labels: Array.from({ length: diceRange }, (_, i) => `${i + 1}`),
+    labels: Array.from({ length: diceRange }, (_, i) => `${i + 1}`), // Dynamically generate labels
     datasets: [
       {
         label: "Frequency",
-        data: results.slice(0, diceRange),
+        data: results.slice(0, diceRange), // Only include relevant results
         backgroundColor: "rgba(255, 206, 86, 0.5)",
         borderColor: "rgba(255, 206, 86, 1)",
         borderWidth: 1,
@@ -179,18 +200,14 @@ export default function DiceThrower() {
           id="dice-range"
           value={diceRange}
           onChange={(e) => {
-            const newRange = parseInt(e.target.value);
-            setDiceRange(newRange); // Update dice range
-            setThrows(0); // Reset number of throws
-            setResults(Array(10).fill(0)); // Reset results array
-            setDice([1, 1, 1]); // Reset dice to initial values
-            setTotal(3); // Reset total to the minimum sum
+            const newRange = parseInt(e.target.value, 10);
+            updateDiceRange(newRange); // Use the helper function
           }}
           className="mb-5 px-4 py-2 rounded text-black"
         >
-          {[6, 7, 8, 9, 10].map((range) => (
-            <option key={range} value={range}>
-              1-{range}
+          {diceOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>
@@ -208,7 +225,6 @@ export default function DiceThrower() {
             </div>
           ))}
         </div>
-
         <p className="text-lg font-medium">
           Total: {dice.reduce((a, b) => a + b, 0)}
         </p>
