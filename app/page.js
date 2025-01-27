@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import clsx from "clsx"; // To handle conditional classes easily
 import { Bar } from "react-chartjs-2";
 import {
@@ -190,6 +191,12 @@ export default function DiceThrower() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start p-5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
+      <Link
+        className="flex text-sm text-white rounded-md items-start w-fit bg-slate-900 py-1 px-2 mb-3"
+        href="/dice"
+      >
+        Fibonacci Dice ➡️
+      </Link>
       <h1 className="text-2xl font-bold mb-5 mt-1">
         Mr Kinnear&apos;s Dice Roller
       </h1>
