@@ -119,7 +119,7 @@ export default function DiceThrower() {
         pointRadius: 0,
       },
       {
-        label: "95% Lo CI ",
+        label: "Lower 95% CI ",
         data: Array(diceRange).fill(expectedFrequency - confidenceInterval),
         type: "line",
         borderColor: "rgb(236, 8, 8)",
@@ -127,7 +127,7 @@ export default function DiceThrower() {
         pointRadius: 0,
       },
       {
-        label: "95% Hi CI",
+        label: "Upper 95% CI",
         data: Array(diceRange).fill(expectedFrequency + confidenceInterval),
         type: "line",
         borderColor: "rgb(236, 8, 8)",
